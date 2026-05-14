@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-supplies-v5';
+const CACHE_NAME = 'dental-supplies-v6';
 
 // Build cache URLs relative to the SW scope (works on GitHub Pages and any subdirectory)
 function getScope() {
@@ -52,21 +52,36 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch: stale-while-revalidate for all local assets
+// Fetch: network-first for HTML (always fresh), cache-first for libs (rarely change)
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const fetchPromise = fetch(event.request).then((response) => {
+  const url = new URL(event.request.url);
+  const isPage = url.pathname.endsWith('/') || url.pathname.endsWith('.html');
+
+  if (isPage) {
+    // Network-first for pages: always try to get latest, fall back to cache
+    event.respondWith(
+      fetch(event.request).then((response) => {
         if (response && response.status === 200) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         }
         return response;
-      }).catch(() => null);
-
-      return cached || fetchPromise;
-    })
-  );
+      }).catch(() => caches.match(event.request))
+    );
+  } else {
+    // Cache-first for lib files (JS libraries never change)
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        return cached || fetch(event.request).then((response) => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        });
+      })
+    );
+  }
 });
