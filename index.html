@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="耗材申报">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="description" content="牙科耗材申报助手 - 轻量级耗材管理工具">
+  <title>牙科耗材申报助手</title>
+
+  <!-- TailwindCSS (local) -->
+  <script src="lib/tailwindcss.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            medical: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              300: '#93c5fd',
+              400: '#60a5fa',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            }
+          },
+          animation: {
+            'slide-up': 'slideUp 0.3s ease-out',
+            'slide-down': 'slideDown 0.3s ease-out',
+            'fade-in': 'fadeIn 0.2s ease-out',
+            'scale-in': 'scaleIn 0.2s ease-out',
+            'bounce-soft': 'bounceSoft 0.5s ease-out',
+          },
+          keyframes: {
+            slideUp: {
+              '0%': { transform: 'translateY(100%)', opacity: '0' },
+              '100%': { transform: 'translateY(0)', opacity: '1' },
+            },
+            slideDown: {
+              '0%': { transform: 'translateY(0)', opacity: '1' },
+              '100%': { transform: 'translateY(100%)', opacity: '0' },
+            },
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
+            scaleIn: {
+              '0%': { transform: 'scale(0.95)', opacity: '0' },
+              '100%': { transform: 'scale(1)', opacity: '1' },
+            },
+            bounceSoft: {
+              '0%': { transform: 'scale(1)' },
+              '30%': { transform: 'scale(0.97)' },
+              '60%': { transform: 'scale(1.02)' },
+              '100%': { transform: 'scale(1)' },
+            },
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+    .dark ::-webkit-scrollbar-thumb { background: #475569; }
+
+    /* Safe area for iPhone notch */
+    .safe-top { padding-top: env(safe-area-inset-top, 0px); }
+    .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+    /* Smooth theme transition */
+    * { transition: background-color 0.3s ease, border-color 0.3s ease; }
+
+    /* Prevent text selection on buttons */
+    .no-select { user-select: none; -webkit-user-select: none; }
+
+    /* Tap highlight */
+    .tap-active:active { opacity: 0.7; transform: scale(0.98); transition: all 0.1s ease; }
+
+    /* Input focus styles */
+    input:focus { outline: none; }
+
+    /* Quantity button base */
+    .qty-btn {
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      font-size: 18px;
+      font-weight: 600;
+      transition: all 0.15s ease;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .qty-btn:active { transform: scale(0.9); }
+
+    /* Checkbox custom */
+    .custom-checkbox {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      border: 2px solid #d1d5db;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .custom-checkbox.checked {
+      background: #2563eb;
+      border-color: #2563eb;
+    }
+    .dark .custom-checkbox { border-color: #4b5563; }
+
+    /* Bottom sheet backdrop */
+    .backdrop {
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+    }
+
+    /* Pulse animation for copy success */
+    @keyframes pulse-ring {
+      0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
+      70% { box-shadow: 0 0 0 12px rgba(37, 99, 235, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+    }
+    .pulse-ring { animation: pulse-ring 1.5s ease-out; }
+
+    /* List item enter */
+    @keyframes listEnter {
+      0% { opacity: 0; transform: translateX(-20px); max-height: 0; }
+      100% { opacity: 1; transform: translateX(0); max-height: 80px; }
+    }
+    .list-enter { animation: listEnter 0.3s ease-out; }
+
+    /* Empty state */
+    .empty-state-icon {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: #eff6ff;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto;
+    }
+    .dark .empty-state-icon { background: #1e293b; }
+
+    /* Category tab */
+    .cat-tab {
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* Hide scrollbar for category tabs */
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-950 min-h-screen transition-colors duration-300">
+
+  <div id="root"></div>
+
+  <!-- React & ReactDOM (local) -->
+  <script src="lib/react.production.min.js"></script>
+  <script src="lib/react-dom.production.min.js"></script>
+  <!-- Babel standalone (local) -->
+  <script src="lib/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useRef, useMemo } = React;
+
+    // ─── Constants ─────────────────────────────────────────────
+    const STORAGE_KEY = 'dental-supplies-data';
+    const DARK_MODE_KEY = 'dental-dark-mode';
+
+    const DEFAULT_CATEGORIES = ['树脂类', '麻醉类', '消耗品类', '器械类', '其他'];
+
+    const DEFAULT_SUPPLIES = [
+      { id: '1', name: '树脂', category: '树脂类', checked: false, quantity: 1 },
+      { id: '2', name: '麻药', category: '麻醉类', checked: false, quantity: 1 },
+      { id: '3', name: '一次性托盘', category: '消耗品类', checked: false, quantity: 1 },
+      { id: '4', name: '手套', category: '消耗品类', checked: false, quantity: 1 },
+      { id: '5', name: '棉球', category: '消耗品类', checked: false, quantity: 1 },
+    ];
+
+    // ─── Utility Functions ─────────────────────────────────────
+    function generateId() {
+      return Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
+    }
+
+    function getTodayYYYYMM() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      return `${y}-${m}`;
+    }
+
+    function cn(...classes) {
+      return classes.filter(Boolean).join(' ');
+    }
+
+    // ─── Custom Hook: useLocalStorage ──────────────────────────
+    function useLocalStorage(key, initialValue) {
+      const [storedValue, setStoredValue] = useState(() => {
+        try {
+          const item = window.localStorage.getItem(key);
+          return item ? JSON.parse(item) : initialValue;
+        } catch (e) {
+          return initialValue;
+        }
+      });
+
+      const setValue = useCallback((value) => {
+        setStoredValue(prev => {
+          const newValue = typeof value === 'function' ? value(prev) : value;
+          try {
+            window.localStorage.setItem(key, JSON.stringify(newValue));
+          } catch (e) {
+            console.warn('Failed to save to localStorage:', e);
+          }
+          return newValue;
+        });
+      }, [key]);
+
+      return [storedValue, setValue];
+    }
+
+    // ─── Icons ─────────────────────────────────────────────────
+    function IconSearch({ className }) {
+      return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.3-4.3"/>
+        </svg>
+      );
+    }
+
+    function IconSun({ className }) {
+      return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="5"/>
+          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+      );
+    }
+
+    function IconMoon({ className }) {
+      return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      );
+    }
+
+    function IconPlus({ className }) {
+      return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+      );
+    }
+
+    function IconMinus({ className }) {
+      return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <path d="M5 12h14"/>
+        </svg>
+      );
+    }
+
+    function IconCheck({ className }) {
+      return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20 6 9 17l-5-5"/>
+        </svg>
+      );
+    }
+
+    function IconCopy({ className }) {
+      return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+      );
+    }
+
+    function IconDownload({ className }) {
+      return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      );
+    }
+
+    function IconTrash({ className }) {
+      return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        </svg>
+      );
+    }
+
+    function IconEdit({ className }) {
+      return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      );
+    }
+
+    function IconChevronDown({ className }) {
+      return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      );
+    }
+
+    function IconPackage({ className }) {
+      return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M16.5 9.4 7.55 4.24"/>
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+          <line x1="12" y1="22.08" x2="12" y2="12"/>
+        </svg>
+      );
+    }
+
+    function IconClose({ className }) {
+      return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M18 6 6 18M6 6l12 12"/>
+        </svg>
+      );
+    }
+
+    // ─── Toast Notification ────────────────────────────────────
+    function Toast({ message, type, visible, onClose }) {
+      useEffect(() => {
+        if (visible) {
+          const timer = setTimeout(onClose, 2000);
+          return () => clearTimeout(timer);
+        }
+      }, [visible, onClose]);
+
+      if (!visible) return null;
+
+      const bgColor = type === 'success'
+        ? 'bg-green-500 dark:bg-green-600'
+        : type === 'error'
+        ? 'bg-red-500 dark:bg-red-600'
+        : 'bg-gray-800 dark:bg-gray-200';
+
+      return (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] animate-slide-down">
+          <div className={cn(
+            bgColor,
+            'text-white dark:text-gray-900 px-6 py-3 rounded-2xl shadow-lg',
+            'flex items-center gap-2 text-base font-medium',
+            'animate-scale-in'
+          )}>
+            {type === 'success' && <IconCheck className="w-5 h-5 flex-shrink-0" />}
+            <span>{message}</span>
+          </div>
+        </div>
+      );
+    }
+
+    // ─── Bottom Sheet Modal ────────────────────────────────────
+    function BottomSheet({ isOpen, onClose, title, children }) {
+      if (!isOpen) return null;
+
+      return (
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 backdrop animate-fade-in"
+            onClick={onClose}
+          />
+
+          {/* Sheet */}
+          <div className={cn(
+            'relative w-full max-w-lg bg-white dark:bg-gray-900 rounded-t-3xl',
+            'animate-slide-up safe-bottom',
+            'shadow-2xl'
+          )}>
+            {/* Handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
+            </div>
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-3">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
+              <button
+                onClick={onClose}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 tap-active"
+              >
+                <IconClose className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="px-6 pb-8">
+              {children}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ─── Confirm Dialog ────────────────────────────────────────
+    function ConfirmDialog({ isOpen, onConfirm, onCancel, title, message }) {
+      if (!isOpen) return null;
+
+      return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 backdrop animate-fade-in" onClick={onCancel} />
+          <div className={cn(
+            'relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-6 w-full max-w-sm',
+            'animate-scale-in'
+          )}>
+            <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">{title}</h4>
+            <p className="text-gray-500 dark:text-gray-400 mb-6">{message}</p>
+            <div className="flex gap-3">
+              <button
+                onClick={onCancel}
+                className="flex-1 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium tap-active"
+              >
+                取消
+              </button>
+              <button
+                onClick={onConfirm}
+                className="flex-1 py-3 rounded-xl bg-red-500 text-white font-medium tap-active"
+              >
+                删除
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ─── Add/Edit Form ─────────────────────────────────────────
+    function AddEditForm({ onSubmit, onCancel, initialData, categories }) {
+      const [name, setName] = useState(initialData?.name || '');
+      const [category, setCategory] = useState(initialData?.category || categories[0]);
+      const [quantity, setQuantity] = useState(initialData?.quantity || 1);
+      const [showCustomCat, setShowCustomCat] = useState(false);
+      const [customCat, setCustomCat] = useState('');
+      const [error, setError] = useState('');
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        const trimmedName = name.trim();
+        if (!trimmedName) {
+          setError('请输入耗材名称');
+          return;
+        }
+        const finalCategory = showCustomCat ? (customCat.trim() || categories[0]) : category;
+        onSubmit({
+          name: trimmedName,
+          category: finalCategory,
+          quantity: Math.max(1, quantity),
+        });
+      };
+
+      return (
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Name */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+              耗材名称
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => { setName(e.target.value); setError(''); }}
+              placeholder="输入耗材名称"
+              autoFocus
+              className={cn(
+                'w-full px-4 py-3 text-base rounded-xl',
+                'bg-gray-50 dark:bg-gray-800',
+                'border-2 border-gray-200 dark:border-gray-700',
+                'focus:border-medical-500 dark:focus:border-medical-400',
+                'text-gray-900 dark:text-gray-100',
+                'placeholder-gray-400 dark:placeholder-gray-500',
+                'transition-colors'
+              )}
+            />
+            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+          </div>
+
+          {/* Category */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+              分类
+            </label>
+            {!showCustomCat ? (
+              <div className="flex flex-wrap gap-2">
+                {categories.map(cat => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setCategory(cat)}
+                    className={cn(
+                      'px-4 py-2 rounded-full text-sm font-medium transition-all tap-active',
+                      category === cat
+                        ? 'bg-medical-500 text-white shadow-md'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                    )}
+                  >
+                    {cat}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setShowCustomCat(true)}
+                  className="px-4 py-2 rounded-full text-sm font-medium bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 tap-active border border-dashed border-gray-300 dark:border-gray-600"
+                >
+                  + 自定义
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={customCat}
+                  onChange={(e) => setCustomCat(e.target.value)}
+                  placeholder="输入分类名称"
+                  className={cn(
+                    'flex-1 px-4 py-2 text-sm rounded-xl',
+                    'bg-gray-50 dark:bg-gray-800',
+                    'border-2 border-gray-200 dark:border-gray-700',
+                    'focus:border-medical-500 dark:focus:border-medical-400',
+                    'text-gray-900 dark:text-gray-100'
+                  )}
+                />
+                <button
+                  type="button"
+                  onClick={() => { setShowCustomCat(false); setCustomCat(''); }}
+                  className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 tap-active"
+                >
+                  返回
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Quantity */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+              默认数量
+            </label>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                className="qty-btn bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+              >
+                <IconMinus className="w-4 h-4" />
+              </button>
+              <span className="text-xl font-semibold text-gray-900 dark:text-gray-100 w-10 text-center">
+                {quantity}
+              </span>
+              <button
+                type="button"
+                onClick={() => setQuantity(q => Math.min(999, q + 1))}
+                className="qty-btn bg-medical-100 dark:bg-medical-900 text-medical-600 dark:text-medical-400"
+              >
+                <IconPlus className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Submit */}
+          <button
+            type="submit"
+            className={cn(
+              'w-full py-3.5 rounded-2xl text-white font-semibold text-base',
+              'bg-medical-500 active:bg-medical-600',
+              'shadow-lg shadow-medical-500/25',
+              'transition-all tap-active'
+            )}
+          >
+            {initialData ? '保存修改' : '添加耗材'}
+          </button>
+        </form>
+      );
+    }
+
+    // ─── Supply Item ───────────────────────────────────────────
+    function SupplyItem({ supply, onToggle, onQuantityChange, onEdit, onDelete, editMode }) {
+      const isChecked = supply.checked;
+
+      return (
+        <div className={cn(
+          'flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-2 transition-all duration-200',
+          'bg-white dark:bg-gray-900',
+          'border border-gray-100 dark:border-gray-800',
+          'shadow-sm',
+          isChecked && 'bg-blue-50/50 dark:bg-blue-950/30 border-blue-100 dark:border-blue-900/50',
+          'list-enter tap-active'
+        )}>
+          {/* Checkbox */}
+          <div
+            onClick={onToggle}
+            className={cn(
+              'custom-checkbox',
+              isChecked && 'checked'
+            )}
+          >
+            {isChecked && <IconCheck className="w-4 h-4 text-white" />}
+          </div>
+
+          {/* Name & Category */}
+          <div className="flex-1 min-w-0" onClick={onToggle}>
+            <p className={cn(
+              'text-base font-medium truncate transition-colors',
+              isChecked
+                ? 'text-medical-600 dark:text-medical-400'
+                : 'text-gray-900 dark:text-gray-100'
+            )}>
+              {supply.name}
+            </p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{supply.category}</p>
+          </div>
+
+          {/* Quantity Controls */}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <button
+              onClick={(e) => { e.stopPropagation(); onQuantityChange(-1); }}
+              className="qty-btn bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+              style={{ width: 32, height: 32, fontSize: 16 }}
+            >
+              <IconMinus className="w-3 h-3" />
+            </button>
+            <span className={cn(
+              'w-8 text-center text-base font-semibold',
+              isChecked ? 'text-medical-600 dark:text-medical-400' : 'text-gray-900 dark:text-gray-100'
+            )}>
+              {supply.quantity}
+            </span>
+            <button
+              onClick={(e) => { e.stopPropagation(); onQuantityChange(1); }}
+              className="qty-btn bg-medical-50 dark:bg-medical-900/50 text-medical-600 dark:text-medical-400"
+              style={{ width: 32, height: 32, fontSize: 16 }}
+            >
+              <IconPlus className="w-3 h-3" />
+            </button>
+          </div>
+
+          {/* Edit/Delete buttons in edit mode */}
+          {editMode && (
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <button
+                onClick={onEdit}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 tap-active"
+              >
+                <IconEdit className="w-4 h-4" />
+              </button>
+              <button
+                onClick={onDelete}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 dark:bg-red-900/30 text-red-500 tap-active"
+              >
+                <IconTrash className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ─── Empty State ───────────────────────────────────────────
+    function EmptyState({ onAdd, isSearchResult }) {
+      return (
+        <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+          <div className="empty-state-icon mb-5">
+            <IconPackage className="w-10 h-10 text-medical-400 dark:text-medical-600" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            {isSearchResult ? '没有找到匹配的耗材' : '还没有添加耗材'}
+          </h3>
+          <p className="text-gray-400 dark:text-gray-500 mb-6 text-sm">
+            {isSearchResult ? '试试其他关键词或换个分类' : '点击下方按钮添加第一种耗材'}
+          </p>
+          {!isSearchResult && (
+            <button
+              onClick={onAdd}
+              className={cn(
+                'px-6 py-3 rounded-2xl text-white font-medium',
+                'bg-medical-500 active:bg-medical-600',
+                'shadow-lg shadow-medical-500/25',
+                'transition-all tap-active'
+              )}
+            >
+              添加耗材
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    // ─── Stats Bar ─────────────────────────────────────────────
+    function StatsBar({ total, checked }) {
+      const percentage = total > 0 ? Math.round((checked / total) * 100) : 0;
+
+      return (
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              已勾选 <strong className="text-medical-600 dark:text-medical-400">{checked}</strong> / {total} 项
+            </span>
+            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              {percentage}%
+            </span>
+          </div>
+          <div className="w-full h-1.5 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-medical-500 transition-all duration-500 ease-out"
+              style={{ width: `${percentage}%` }}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    // ─── Category Tabs ─────────────────────────────────────────
+    function CategoryTabs({ categories, active, onChange }) {
+      const scrollRef = useRef(null);
+
+      return (
+        <div className="px-4 pb-3">
+          <div
+            ref={scrollRef}
+            className="flex gap-2 overflow-x-auto hide-scrollbar"
+          >
+            <button
+              onClick={() => onChange('all')}
+              className={cn(
+                'cat-tab flex-shrink-0',
+                active === 'all'
+                  ? 'bg-medical-500 text-white shadow-md'
+                  : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-800'
+              )}
+            >
+              全部
+            </button>
+            {categories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => onChange(cat)}
+                className={cn(
+                  'cat-tab flex-shrink-0',
+                  active === cat
+                    ? 'bg-medical-500 text-white shadow-md'
+                    : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-800'
+                )}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ─── MAIN APP ──────────────────────────────────────────────
+    function App() {
+      // ── State ──
+      const [supplies, setSupplies] = useLocalStorage(STORAGE_KEY, DEFAULT_SUPPLIES);
+      const [darkMode, setDarkMode] = useLocalStorage(DARK_MODE_KEY, false);
+      const [searchQuery, setSearchQuery] = useState('');
+      const [activeCategory, setActiveCategory] = useState('all');
+      const [editMode, setEditMode] = useState(false);
+      const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
+      const [showForm, setShowForm] = useState(false);
+      const [editingSupply, setEditingSupply] = useState(null);
+      const [deleteConfirm, setDeleteConfirm] = useState(null);
+      const [updateAvailable, setUpdateAvailable] = useState(false);
+
+      // ── Derived State: Categories ──
+      const allCategories = useMemo(() => {
+        const cats = new Set(DEFAULT_CATEGORIES);
+        supplies.forEach(s => { if (s.category) cats.add(s.category); });
+        return Array.from(cats);
+      }, [supplies]);
+
+      // ── Filtered Supplies ──
+      const filteredSupplies = useMemo(() => {
+        let list = supplies;
+        if (activeCategory !== 'all') {
+          list = list.filter(s => s.category === activeCategory);
+        }
+        if (searchQuery.trim()) {
+          const q = searchQuery.trim().toLowerCase();
+          list = list.filter(s =>
+            s.name.toLowerCase().includes(q) ||
+            (s.category && s.category.toLowerCase().includes(q))
+          );
+        }
+        return list;
+      }, [supplies, activeCategory, searchQuery]);
+
+      // ── Checked Supplies (for export/copy) ──
+      const checkedSupplies = useMemo(() => {
+        return supplies.filter(s => s.checked && s.quantity > 0);
+      }, [supplies]);
+
+      // ── Dark Mode Effect ──
+      useEffect(() => {
+        const html = document.documentElement;
+        if (darkMode) {
+          html.classList.add('dark');
+          document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#0f172a');
+        } else {
+          html.classList.remove('dark');
+          document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#2563eb');
+        }
+      }, [darkMode]);
+
+      // ── PWA Manifest + Service Worker ──
+      useEffect(() => {
+        // Inject manifest
+        const manifest = {
+          name: '牙科耗材申报助手',
+          short_name: '耗材申报',
+          description: '轻量级牙科耗材管理工具',
+          start_url: '.',
+          display: 'standalone',
+          background_color: '#ffffff',
+          theme_color: '#2563eb',
+          icons: [{
+            src: 'data:image/svg+xml,' + encodeURIComponent(
+              '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="#2563eb"/><text x="50" y="68" text-anchor="middle" fill="white" font-size="55" font-weight="bold" font-family="sans-serif">+</text></svg>'
+            ),
+            sizes: '100x100',
+            type: 'image/svg+xml',
+            purpose: 'any maskable'
+          }]
+        };
+        const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = url;
+        document.head.appendChild(link);
+
+        let swRegistration = null;
+        let updateInterval = null;
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+          let refreshing = false;
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+              refreshing = true;
+              window.location.reload();
+            }
+          });
+
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              swRegistration = registration;
+
+              // Listen for new worker
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                if (newWorker) {
+                  newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                      setUpdateAvailable(true);
+                    }
+                  });
+                }
+              });
+
+              // Periodic update check
+              updateInterval = setInterval(() => {
+                registration.update();
+              }, 60 * 60 * 1000);
+            })
+            .catch(() => {
+              // SW failed — app still fully functional
+            });
+        }
+
+        return () => {
+          document.head.removeChild(link);
+          URL.revokeObjectURL(url);
+          if (updateInterval) clearInterval(updateInterval);
+        };
+      }, []);
+
+      // ── Actions ──
+      const showToast = useCallback((message, type = 'success') => {
+        setToast({ visible: true, message, type });
+      }, []);
+
+      const hideToast = useCallback(() => {
+        setToast(prev => ({ ...prev, visible: false }));
+      }, []);
+
+      const handleAddSupply = useCallback((data) => {
+        const newSupply = {
+          id: generateId(),
+          name: data.name,
+          category: data.category,
+          checked: false,
+          quantity: data.quantity,
+        };
+        setSupplies(prev => [newSupply, ...prev]);
+        setShowForm(false);
+        showToast('耗材已添加');
+      }, [setSupplies, showToast]);
+
+      const handleEditSupply = useCallback((data) => {
+        setSupplies(prev => prev.map(s =>
+          s.id === editingSupply.id
+            ? { ...s, name: data.name, category: data.category, quantity: data.quantity }
+            : s
+        ));
+        setEditingSupply(null);
+        setShowForm(false);
+        showToast('耗材已更新');
+      }, [setSupplies, editingSupply, showToast]);
+
+      const handleDeleteSupply = useCallback((id) => {
+        setSupplies(prev => prev.filter(s => s.id !== id));
+        setDeleteConfirm(null);
+        showToast('耗材已删除');
+      }, [setSupplies, showToast]);
+
+      const handleToggleCheck = useCallback((id) => {
+        setSupplies(prev => prev.map(s =>
+          s.id === id ? { ...s, checked: !s.checked } : s
+        ));
+      }, [setSupplies]);
+
+      const handleQuantityChange = useCallback((id, delta) => {
+        setSupplies(prev => prev.map(s =>
+          s.id === id ? { ...s, quantity: Math.max(1, Math.min(999, s.quantity + delta)) } : s
+        ));
+      }, [setSupplies]);
+
+      const handleCopy = useCallback(async () => {
+        if (checkedSupplies.length === 0) {
+          showToast('请先勾选需要申报的耗材', 'error');
+          return;
+        }
+        const text = checkedSupplies.map(s => `${s.name} ×${s.quantity}`).join('\n');
+        try {
+          await navigator.clipboard.writeText(text);
+          showToast(`已复制 ${checkedSupplies.length} 项耗材需求`);
+        } catch {
+          // Fallback for older browsers or non-HTTPS
+          const textarea = document.createElement('textarea');
+          textarea.value = text;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.select();
+          try {
+            document.execCommand('copy');
+            showToast(`已复制 ${checkedSupplies.length} 项耗材需求`);
+          } catch {
+            showToast('复制失败，请重试', 'error');
+          }
+          document.body.removeChild(textarea);
+        }
+      }, [checkedSupplies, showToast]);
+
+      const handleExport = useCallback(() => {
+        if (checkedSupplies.length === 0) {
+          showToast('请先勾选需要申报的耗材', 'error');
+          return;
+        }
+        const text = checkedSupplies.map(s => `${s.name} ×${s.quantity}`).join('\n');
+        const filename = `${getTodayYYYYMM()}耗材申报.txt`;
+        const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast(`已导出 ${filename}`);
+      }, [checkedSupplies, showToast]);
+
+      const openEditForm = useCallback((supply) => {
+        setEditingSupply(supply);
+        setShowForm(true);
+      }, []);
+
+      const openAddForm = useCallback(() => {
+        setEditingSupply(null);
+        setShowForm(true);
+      }, []);
+
+      const closeForm = useCallback(() => {
+        setShowForm(false);
+        setEditingSupply(null);
+      }, []);
+
+      const confirmDelete = useCallback((supply) => {
+        setDeleteConfirm(supply);
+      }, []);
+
+      // ── Render ──
+      const checkedCount = checkedSupplies.length;
+      const totalCount = supplies.length;
+      const filteredCount = filteredSupplies.length;
+
+      return (
+        <div className="min-h-screen flex flex-col max-w-lg mx-auto relative">
+          {/* ── Update Banner ── */}
+          {updateAvailable && (
+            <div className="fixed top-0 left-0 right-0 z-[200] safe-top">
+              <div className="max-w-lg mx-auto px-4 pt-3">
+                <div className="bg-medical-500 text-white px-4 py-3 rounded-2xl shadow-lg flex items-center justify-between gap-3 animate-slide-down">
+                  <span className="text-sm font-medium">有新版本可用</span>
+                  <button
+                    onClick={() => {
+                      navigator.serviceWorker.getRegistration().then(reg => {
+                        if (reg && reg.waiting) {
+                          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+                        }
+                      });
+                      window.location.reload();
+                    }}
+                    className="px-4 py-1.5 bg-white text-medical-600 rounded-full text-sm font-semibold tap-active flex-shrink-0"
+                  >
+                    立即更新
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Header ── */}
+          <header className={cn(
+            'sticky top-0 z-30 safe-top',
+            'bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl',
+            'border-b border-gray-100 dark:border-gray-800'
+          )}>
+            <div className="flex items-center justify-between px-4 py-3">
+              <div>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                  耗材申报
+                </h1>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                  {getTodayYYYYMM()} · 共{totalCount}项耗材
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Edit Mode Toggle */}
+                <button
+                  onClick={() => setEditMode(e => !e)}
+                  className={cn(
+                    'w-9 h-9 flex items-center justify-center rounded-full transition-all tap-active',
+                    editMode
+                      ? 'bg-medical-100 dark:bg-medical-900/50 text-medical-600 dark:text-medical-400'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                  )}
+                  title="编辑模式"
+                >
+                  <IconEdit className="w-4 h-4" />
+                </button>
+
+                {/* Dark Mode Toggle */}
+                <button
+                  onClick={() => setDarkMode(d => !d)}
+                  className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 transition-all tap-active"
+                  title={darkMode ? '切换浅色模式' : '切换深色模式'}
+                >
+                  {darkMode ? <IconSun className="w-4 h-4" /> : <IconMoon className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Search Bar */}
+            <div className="px-4 pb-3">
+              <div className="relative">
+                <IconSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="搜索耗材名称或分类..."
+                  className={cn(
+                    'w-full pl-11 pr-4 py-2.5 text-base rounded-2xl',
+                    'bg-gray-100 dark:bg-gray-800',
+                    'text-gray-900 dark:text-gray-100',
+                    'placeholder-gray-400 dark:placeholder-gray-500',
+                    'border-2 border-transparent',
+                    'focus:border-medical-500 dark:focus:border-medical-400',
+                    'focus:bg-white dark:focus:bg-gray-900',
+                    'transition-all'
+                  )}
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full bg-gray-300 dark:bg-gray-600 text-white dark:text-gray-300 text-xs tap-active"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Category Tabs */}
+            <CategoryTabs
+              categories={allCategories}
+              active={activeCategory}
+              onChange={setActiveCategory}
+            />
+          </header>
+
+          {/* ── Main Content ── */}
+          <main className="flex-1 px-4 pb-36">
+            {/* Stats */}
+            <StatsBar total={totalCount} checked={checkedCount} />
+
+            {/* Supply List */}
+            {filteredSupplies.length === 0 ? (
+              <EmptyState
+                onAdd={openAddForm}
+                isSearchResult={!!(searchQuery || activeCategory !== 'all')}
+              />
+            ) : (
+              <div>
+                {filteredSupplies.map((supply) => (
+                  <SupplyItem
+                    key={supply.id}
+                    supply={supply}
+                    onToggle={() => handleToggleCheck(supply.id)}
+                    onQuantityChange={(delta) => handleQuantityChange(supply.id, delta)}
+                    onEdit={() => openEditForm(supply)}
+                    onDelete={() => confirmDelete(supply)}
+                    editMode={editMode}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Quick tip when no items checked */}
+            {filteredSupplies.length > 0 && checkedCount === 0 && (
+              <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-4">
+                勾选需要申报的耗材，然后使用下方按钮复制或导出
+              </p>
+            )}
+          </main>
+
+          {/* ── Fixed Bottom Action Bar ── */}
+          <footer className={cn(
+            'fixed bottom-0 left-0 right-0 z-40 safe-bottom',
+            'bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl',
+            'border-t border-gray-100 dark:border-gray-800',
+            'px-4 py-3'
+          )}>
+            <div className="max-w-lg mx-auto flex items-center gap-3">
+              {/* Copy Button */}
+              <button
+                onClick={handleCopy}
+                className={cn(
+                  'flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl',
+                  'font-semibold text-base transition-all tap-active',
+                  checkedCount > 0
+                    ? 'bg-medical-50 dark:bg-medical-900/30 text-medical-700 dark:text-medical-300 border-2 border-medical-200 dark:border-medical-800'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 border-2 border-transparent'
+                )}
+              >
+                <IconCopy className="w-5 h-5" />
+                <span>复制需求</span>
+                {checkedCount > 0 && (
+                  <span className="ml-1 bg-medical-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                    {checkedCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Export Button */}
+              <button
+                onClick={handleExport}
+                className={cn(
+                  'flex items-center justify-center gap-2 py-3.5 px-5 rounded-2xl',
+                  'font-semibold text-base transition-all tap-active',
+                  checkedCount > 0
+                    ? 'bg-medical-500 text-white shadow-lg shadow-medical-500/25'
+                    : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500'
+                )}
+              >
+                <IconDownload className="w-5 h-5" />
+                <span className="hidden sm:inline">导出TXT</span>
+              </button>
+
+              {/* Add FAB */}
+              <button
+                onClick={openAddForm}
+                className={cn(
+                  'w-14 h-14 flex-shrink-0 flex items-center justify-center rounded-2xl',
+                  'bg-medical-500 text-white shadow-lg shadow-medical-500/30',
+                  'active:bg-medical-600 transition-all tap-active',
+                  'hover:shadow-xl hover:shadow-medical-500/40'
+                )}
+              >
+                <IconPlus className="w-7 h-7" />
+              </button>
+            </div>
+          </footer>
+
+          {/* ── Modals ── */}
+          <BottomSheet
+            isOpen={showForm}
+            onClose={closeForm}
+            title={editingSupply ? '编辑耗材' : '添加耗材'}
+          >
+            <AddEditForm
+              onSubmit={editingSupply ? handleEditSupply : handleAddSupply}
+              onCancel={closeForm}
+              initialData={editingSupply}
+              categories={allCategories}
+            />
+          </BottomSheet>
+
+          <ConfirmDialog
+            isOpen={!!deleteConfirm}
+            onConfirm={() => deleteConfirm && handleDeleteSupply(deleteConfirm.id)}
+            onCancel={() => setDeleteConfirm(null)}
+            title="确认删除"
+            message={`确定要删除「${deleteConfirm?.name}」吗？此操作不可撤销。`}
+          />
+
+          {/* ── Toast ── */}
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            visible={toast.visible}
+            onClose={hideToast}
+          />
+        </div>
+      );
+    }
+
+    // ─── Render ────────────────────────────────────────────────
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
