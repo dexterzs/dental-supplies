@@ -614,7 +614,7 @@
 
       return (
         <div className={cn(
-          'flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-2 transition-all duration-200',
+          'flex items-start gap-3 px-4 py-3.5 rounded-2xl mb-2 transition-all duration-200',
           'bg-white dark:bg-gray-900',
           'border border-gray-100 dark:border-gray-800',
           'shadow-sm',
@@ -625,67 +625,77 @@
           <div
             onClick={onToggle}
             className={cn(
-              'custom-checkbox',
+              'custom-checkbox mt-0.5',
               isChecked && 'checked'
             )}
           >
             {isChecked && <IconCheck className="w-4 h-4 text-white" />}
           </div>
 
-          {/* Name & Category */}
-          <div className="flex-1 min-w-0" onClick={onToggle}>
-            <p className={cn(
-              'text-base font-medium truncate transition-colors',
-              isChecked
-                ? 'text-medical-600 dark:text-medical-400'
-                : 'text-gray-900 dark:text-gray-100'
-            )}>
-              {supply.name}
-            </p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{supply.category}</p>
-          </div>
-
-          {/* Quantity Controls */}
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            <button
-              onClick={(e) => { e.stopPropagation(); onQuantityChange(-1); }}
-              className="qty-btn bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
-              style={{ width: 32, height: 32, fontSize: 16 }}
-            >
-              <IconMinus className="w-3 h-3" />
-            </button>
-            <span className={cn(
-              'w-8 text-center text-base font-semibold',
-              isChecked ? 'text-medical-600 dark:text-medical-400' : 'text-gray-900 dark:text-gray-100'
-            )}>
-              {supply.quantity}
-            </span>
-            <button
-              onClick={(e) => { e.stopPropagation(); onQuantityChange(1); }}
-              className="qty-btn bg-medical-50 dark:bg-medical-900/50 text-medical-600 dark:text-medical-400"
-              style={{ width: 32, height: 32, fontSize: 16 }}
-            >
-              <IconPlus className="w-3 h-3" />
-            </button>
-          </div>
-
-          {/* Edit/Delete buttons in edit mode */}
-          {editMode && (
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <button
-                onClick={onEdit}
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 tap-active"
-              >
-                <IconEdit className="w-4 h-4" />
-              </button>
-              <button
-                onClick={onDelete}
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 dark:bg-red-900/30 text-red-500 tap-active"
-              >
-                <IconTrash className="w-4 h-4" />
-              </button>
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            {/* Row 1: Name */}
+            <div onClick={onToggle} className="mb-2">
+              <p className={cn(
+                'text-base font-medium break-all transition-colors',
+                isChecked
+                  ? 'text-medical-600 dark:text-medical-400'
+                  : 'text-gray-900 dark:text-gray-100'
+              )}>
+                {supply.name}
+              </p>
             </div>
-          )}
+
+            {/* Row 2: Category + Quantity + Actions */}
+            <div className="flex items-center justify-between gap-2">
+              {/* Category tag */}
+              <span className="text-xs text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800 px-2 py-0.5 rounded-full flex-shrink-0">
+                {supply.category}
+              </span>
+
+              {/* Quantity Controls */}
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <button
+                  onClick={(e) => { e.stopPropagation(); onQuantityChange(-1); }}
+                  className="qty-btn bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                  style={{ width: 32, height: 32, fontSize: 16 }}
+                >
+                  <IconMinus className="w-3 h-3" />
+                </button>
+                <span className={cn(
+                  'w-8 text-center text-base font-semibold',
+                  isChecked ? 'text-medical-600 dark:text-medical-400' : 'text-gray-900 dark:text-gray-100'
+                )}>
+                  {supply.quantity}
+                </span>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onQuantityChange(1); }}
+                  className="qty-btn bg-medical-50 dark:bg-medical-900/50 text-medical-600 dark:text-medical-400"
+                  style={{ width: 32, height: 32, fontSize: 16 }}
+                >
+                  <IconPlus className="w-3 h-3" />
+                </button>
+              </div>
+
+              {/* Edit/Delete in edit mode */}
+              {editMode && (
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <button
+                    onClick={onEdit}
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 tap-active"
+                  >
+                    <IconEdit className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={onDelete}
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 dark:bg-red-900/30 text-red-500 tap-active"
+                  >
+                    <IconTrash className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       );
     }
