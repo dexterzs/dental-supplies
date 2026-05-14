@@ -1,12 +1,21 @@
-const CACHE_NAME = 'dental-supplies-v4';
-const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/lib/react.production.min.js',
-  '/lib/react-dom.production.min.js',
-  '/lib/babel.min.js',
-  '/lib/tailwindcss.js',
-];
+const CACHE_NAME = 'dental-supplies-v5';
+
+// Build cache URLs relative to the SW scope (works on GitHub Pages and any subdirectory)
+function getScope() {
+  return self.registration.scope || self.location.href.replace(/\/sw\.js.*$/, '/');
+}
+
+function getAssetURLs() {
+  const scope = getScope();
+  return [
+    scope,
+    scope + 'index.html',
+    scope + 'lib/react.production.min.js',
+    scope + 'lib/react-dom.production.min.js',
+    scope + 'lib/babel.min.js',
+    scope + 'lib/tailwindcss.js',
+  ];
+}
 
 // Listen for skip-waiting message from the page
 self.addEventListener('message', (event) => {
@@ -20,7 +29,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return Promise.allSettled(
-        STATIC_ASSETS.map((url) =>
+        getAssetURLs().map((url) =>
           cache.add(url).catch((err) => {
             console.warn('SW: failed to cache', url, err.message);
           })
@@ -45,7 +54,6 @@ self.addEventListener('activate', (event) => {
 
 // Fetch: stale-while-revalidate for all local assets
 self.addEventListener('fetch', (event) => {
-  // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
@@ -58,7 +66,6 @@ self.addEventListener('fetch', (event) => {
         return response;
       }).catch(() => null);
 
-      // Return cached immediately, update cache in background
       return cached || fetchPromise;
     })
   );
