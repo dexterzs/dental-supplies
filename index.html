@@ -662,14 +662,12 @@
               </p>
             </div>
 
-            {/* Row 2: Category + Quantity + Actions */}
-            <div className="flex items-center justify-between gap-2">
-              {/* Category tag */}
+            {/* Row 2: Category + Quantity */}
+            <div className="flex items-center justify-between">
               <span className="text-xs text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800 px-2 py-0.5 rounded-full flex-shrink-0">
                 {supply.category}
               </span>
 
-              {/* Quantity Controls */}
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 <button
                   onClick={(e) => { e.stopPropagation(); onQuantityChange(-1); }}
@@ -692,49 +690,43 @@
                   <IconPlus className="w-3 h-3" />
                 </button>
               </div>
-
-              {/* Edit/Delete/Reorder in edit mode */}
-              {editMode && (
-                <div className="flex items-center gap-0.5 flex-shrink-0">
-                  <button
-                    onClick={onMoveUp}
-                    disabled={isFirst}
-                    className={cn(
-                      'w-7 h-7 flex items-center justify-center rounded-full tap-active',
-                      isFirst
-                        ? 'bg-gray-50 dark:bg-gray-800 text-gray-300 dark:text-gray-600'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
-                    )}
-                  >
-                    <IconArrowUp className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={onMoveDown}
-                    disabled={isLast}
-                    className={cn(
-                      'w-7 h-7 flex items-center justify-center rounded-full tap-active',
-                      isLast
-                        ? 'bg-gray-50 dark:bg-gray-800 text-gray-300 dark:text-gray-600'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
-                    )}
-                  >
-                    <IconArrowDown className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={onEdit}
-                    className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 tap-active ml-1"
-                  >
-                    <IconEdit className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={onDelete}
-                    className="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 dark:bg-red-900/30 text-red-500 tap-active"
-                  >
-                    <IconTrash className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
             </div>
+
+            {/* Row 3: Reorder + Edit + Delete (edit mode only) */}
+            {editMode && (
+              <div className="flex items-center justify-end gap-2 mt-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                <button onClick={onMoveUp} disabled={isFirst}
+                  className={cn(
+                    'px-3 py-1.5 rounded-full text-xs font-medium tap-active flex items-center gap-1',
+                    isFirst
+                      ? 'bg-gray-50 dark:bg-gray-800 text-gray-300 dark:text-gray-600'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                  )}
+                >
+                  <IconArrowUp className="w-3 h-3" /> 上移
+                </button>
+                <button onClick={onMoveDown} disabled={isLast}
+                  className={cn(
+                    'px-3 py-1.5 rounded-full text-xs font-medium tap-active flex items-center gap-1',
+                    isLast
+                      ? 'bg-gray-50 dark:bg-gray-800 text-gray-300 dark:text-gray-600'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                  )}
+                >
+                  <IconArrowDown className="w-3 h-3" /> 下移
+                </button>
+                <button onClick={onEdit}
+                  className="px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 tap-active flex items-center gap-1"
+                >
+                  <IconEdit className="w-3 h-3" /> 编辑
+                </button>
+                <button onClick={onDelete}
+                  className="px-3 py-1.5 rounded-full text-xs font-medium bg-red-50 dark:bg-red-900/30 text-red-500 tap-active flex items-center gap-1"
+                >
+                  <IconTrash className="w-3 h-3" /> 删除
+                </button>
+              </div>
+            )}
           </div>
         </div>
       );
