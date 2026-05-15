@@ -353,6 +353,22 @@
       );
     }
 
+    function IconArrowUp({ className }) {
+      return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="18 15 12 9 6 15"/>
+        </svg>
+      );
+    }
+
+    function IconArrowDown({ className }) {
+      return (
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      );
+    }
+
     // ─── Toast Notification ────────────────────────────────────
     function Toast({ message, type, visible, onClose }) {
       useEffect(() => {
@@ -609,7 +625,7 @@
     }
 
     // ─── Supply Item ───────────────────────────────────────────
-    function SupplyItem({ supply, onToggle, onQuantityChange, onEdit, onDelete, editMode }) {
+    function SupplyItem({ supply, onToggle, onQuantityChange, onEdit, onDelete, onMoveUp, onMoveDown, isFirst, isLast, editMode }) {
       const isChecked = supply.checked;
 
       return (
@@ -677,12 +693,36 @@
                 </button>
               </div>
 
-              {/* Edit/Delete in edit mode */}
+              {/* Edit/Delete/Reorder in edit mode */}
               {editMode && (
-                <div className="flex items-center gap-1 flex-shrink-0">
+                <div className="flex items-center gap-0.5 flex-shrink-0">
+                  <button
+                    onClick={onMoveUp}
+                    disabled={isFirst}
+                    className={cn(
+                      'w-7 h-7 flex items-center justify-center rounded-full tap-active',
+                      isFirst
+                        ? 'bg-gray-50 dark:bg-gray-800 text-gray-300 dark:text-gray-600'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                    )}
+                  >
+                    <IconArrowUp className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={onMoveDown}
+                    disabled={isLast}
+                    className={cn(
+                      'w-7 h-7 flex items-center justify-center rounded-full tap-active',
+                      isLast
+                        ? 'bg-gray-50 dark:bg-gray-800 text-gray-300 dark:text-gray-600'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                    )}
+                  >
+                    <IconArrowDown className="w-3.5 h-3.5" />
+                  </button>
                   <button
                     onClick={onEdit}
-                    className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 tap-active"
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 tap-active ml-1"
                   >
                     <IconEdit className="w-4 h-4" />
                   </button>
@@ -972,6 +1012,26 @@
         ));
       }, [setSupplies]);
 
+      const handleMoveUp = useCallback((id) => {
+        setSupplies(prev => {
+          const idx = prev.findIndex(s => s.id === id);
+          if (idx <= 0) return prev;
+          const next = [...prev];
+          [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+          return next;
+        });
+      }, [setSupplies]);
+
+      const handleMoveDown = useCallback((id) => {
+        setSupplies(prev => {
+          const idx = prev.findIndex(s => s.id === id);
+          if (idx < 0 || idx >= prev.length - 1) return prev;
+          const next = [...prev];
+          [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+          return next;
+        });
+      }, [setSupplies]);
+
       const handleCopy = useCallback(async () => {
         if (checkedSupplies.length === 0) {
           showToast('请先勾选需要申报的耗材', 'error');
@@ -1161,7 +1221,7 @@
               />
             ) : (
               <div>
-                {filteredSupplies.map((supply) => (
+                {filteredSupplies.map((supply, index) => (
                   <SupplyItem
                     key={supply.id}
                     supply={supply}
@@ -1169,6 +1229,10 @@
                     onQuantityChange={(delta) => handleQuantityChange(supply.id, delta)}
                     onEdit={() => openEditForm(supply)}
                     onDelete={() => confirmDelete(supply)}
+                    onMoveUp={() => handleMoveUp(supply.id)}
+                    onMoveDown={() => handleMoveDown(supply.id)}
+                    isFirst={index === 0}
+                    isLast={index === filteredSupplies.length - 1}
                     editMode={editMode}
                   />
                 ))}
